@@ -1,0 +1,209 @@
+$(document).ready(function(){
+
+	$('#TagText').keyup(function(){
+		var tag = $('#TagText').val()
+		var post = $("#TagText").attr('data-post');
+		var url  = $("#TagText").attr('data-url');
+		if(tag.length > 3){
+			getTags(tag, post, url)
+		} else {
+			$("#_titleList").html(null);
+			$('#_titleBox').hide();
+		}
+	});
+
+	$('#AddTag').click(function(){
+		var data = $("#addTagForm input").serializeArray();
+		var url = $("#AddTag").attr('data-url')
+		$.post( url, data, function(o) { alert(o)});
+		$("#_titleList").html(null);
+		$('#_titleBox').hide();
+
+		$('#TagText').val('')
+		var link = $('#selectTags').attr('data-url');
+		$.get(link , function(o){
+			$('#myTagsContainer').html(o);
+		})
+	})
+
+	function getTags(tags, post, url){
+		var data = $("#addTagForm input").serializeArray();
+
+		$.post( url + post, data, function(o) {
+			if(o != 0){
+				$("#_titleList").html(o);
+				$('#_titleBox').show(100);
+			} else {
+				$("#_titleList").html(null);
+				$('#_titleBox').hide();
+			}
+		});
+	}
+	$("#myTagsContainer").on('click', '.deleteTag', function(e){
+		var url = $(this).attr('data-url');
+		$.get(url, function(e){ alert(e) })
+		var link = $('#selectTags').attr('data-url');
+		$.get(link , function(o){
+			$('#myTagsContainer').html(o);
+		})
+		
+	})
+
+	$('#selectTags').click(function(){
+		$('#myTagsContainer').html("<div class='center-align'><span class='fa fa-5x fa-refresh fa-spin'></span></div>");
+		$("#addTagModal").modal('open');
+		var link = $(this).attr('data-url');
+		$.get(link , function(o){
+			$('#myTagsContainer').html(o);
+		})
+	});
+
+	$('.roleBox').click(function(){
+		var id = $(this).attr("data-id");
+		var checked = $("#accessCheck"+id).prop('checked');
+		$("#accessCheck"+id).prop('checked', checked ? false : true);
+		$(this).toggleClass('card-selected-blue');
+	});
+
+	$('#myManagerContainer').on('click', '.roleBox', function(){
+		var id = $(this).data('id');
+		var image = $(this).data('image');
+		$('#articleImg').val(id);
+		$('#imageHolder').attr('src', image);
+		$(".selecteImageText").text("Image Selected");
+		$("#selectImageModal").modal('close');
+		alert("image selected");
+	});
+	$('#myManagerContainer').on('click', '.paginateImages', function(){
+		$('#myManagerContainer').html("<div class='center-align'><span class='fa fa-5x fa-refresh fa-spin'></span></div>");
+		var current  = $(this).data('current-page');
+		var link = $("#myManagerLink").val();
+		var id = $('#articleImg').val();
+		$.get(link + "/" + current + '?id=' + id , function(o){
+			$('#myManagerContainer').html(o);
+		})
+	});
+	$('#myManagerContainer').on('click', '#addImageButton', function(){
+		$('#addImageInput').click();
+	});
+	$('#myManagerContainer').on('change', '#addImageInput', function(){
+		$('#addImage').click();
+	});
+	$('#myManagerContainer').on('submit', '#addImageForm', function(e){
+		e.preventDefault();
+		var data = new FormData(this);
+		
+		var url = $("#uploadLink").val();
+		$.ajax({
+			url: url,
+			method: "POST",
+			data: data,
+			contentType: false,
+			processData: false,
+			success: function(o){
+				console.log(o);
+				json = JSON.parse(o);
+				if(json.status == "success"){
+					$('#articleImg').val(json.id);
+					$(".selecteImageText").text("Image Selected");
+					$("#selectImageModal").modal('close');
+				}
+				alert(json.message)
+			}
+		})
+	});
+	$('#selectImage').click(function(){
+		$('#myManagerContainer').html("<div class='center-align'><span class='fa fa-5x fa-refresh fa-spin'></span></div>");
+		$("#selectImageModal").modal('open');
+		var link = $("#myManagerLink").val();
+		var id = $('#articleImg').val();
+		$.get(link + '?id=' + id , function(o){
+			$('#myManagerContainer').html(o);
+		})
+	});
+
+	$('#post').froalaEditor({
+		toolbarButtons: ['fullscreen', 'bold', 'italic', 'underline', 'strikeThrough', 'subscript', 'superscript', '|', 'fontFamily', 'fontSize', 'color', 'inlineStyle', 'paragraphStyle', '|', 'paragraphFormat', 'align', 'formatOL', 'formatUL', 'outdent', 'indent', 'quote', '-', 'insertLink', 'insertImage', 'insertVideo', 'insertFile', 'insertTable', '|', 'emoticons', 'specialCharacters', 'insertHR', 'selectAll', 'clearFormatting', '|', 'print', 'help', 'html', '|', 'undo', 'redo'],
+
+		heightMin: 500,
+		// Set the file upload parameter.
+		fileUploadParam: 'file_param',
+
+		// Set the file upload URL.
+		fileUploadURL: $("#uploadLink").val(),
+
+        // Additional upload params.
+        fileUploadParams: {type: 'file'},
+
+		// Set request type.
+		fileUploadMethod: 'POST',
+
+		// Set max file size to 20MB.
+		fileMaxSize: 20 * 1024 * 1024,
+
+		// Allow to upload any file.
+		fileAllowedTypes: ['*'],
+
+
+		// Set the image upload parameter.
+		imageUploadParam: 'file_param',
+
+        // Set the image upload URL.
+        imageUploadURL: $("#uploadLink").val(), 
+
+
+        // Additional upload params.
+        imageUploadParams: {type: 'image'},
+
+        // Set request type.
+        imageUploadMethod: 'POST',
+
+        // Set max image size to 5MB.
+        imageMaxSize: 5 * 1024 * 1024,
+
+        // Allow to upload PNG and JPG.
+        imageAllowedTypes: ['jpeg', 'jpg', 'png'],
+
+        // Set the video upload parameter.
+        videoUploadParam: 'file_param',
+
+        // Set the video upload URL.
+        videoUploadURL: $("#uploadLink").val(),
+
+        // Additional upload params.
+        videoUploadParams: {type: 'video'},
+
+        // Set request type.
+        videoUploadMethod: 'POST',
+
+        // Set max video size to 50MB.
+        videoMaxSize: 50 * 1024 * 1024,
+
+        // Allow to upload MP4, WEBM and OGG
+        videoAllowedTypes: ['webm', 'mp4', 'ogg'],
+
+        // Set page size.
+        imageManagerPageSize: 20,
+
+        // Set a scroll offset (value in pixels).
+        imageManagerScrollOffset: 10,
+
+        // Set the load images request URL.
+        imageManagerLoadURL: $("#managerLink").val(),
+
+        // Set the load images request type.
+        imageManagerLoadMethod: "GET",
+
+        // Set the delete image request URL.
+        imageManagerDeleteURL: $("#deleteLink").val(),
+
+        // Set the delete image request type.
+        imageManagerDeleteMethod: "GET",
+    }).on('froalaEditor.image.removed', function (e, editor, $img) {
+    	var link = $("#deleteLink").val();
+    	var id = $img.data('id');
+    	var newlink = link + '?id=' + id
+    	console.log(newlink);
+    	$.get(newlink, function(o){})
+    })
+});
